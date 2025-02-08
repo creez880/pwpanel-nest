@@ -1,10 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 import { AppConfigService } from './config/app-config.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new ConsoleLogger({
+      prefix: 'PW-Panel'
+      // logLevels: ['error', 'warn', 'log']
+    })
+  });
   const appConfigService: AppConfigService = app.get(AppConfigService);
 
   const logger: Logger = new Logger('main');
