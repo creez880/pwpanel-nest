@@ -1,27 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UserDto } from './user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  private readonly users: UserDto[] = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme'
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess'
-    },
-    {
-      userId: 3,
-      username: 'michael',
-      password: 'jordan'
-    }
-  ];
+  private readonly logger: Logger = new Logger(UsersService.name);
 
-  async findOne(username: string): Promise<UserDto | undefined> {
-    return this.users.find((user) => user.username === username);
+  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+
+  async findOne(usernameSearch: string): Promise<UserDto> {
+    const user: User | null = await this.userRepository.findOne({ where: { username: usernameSearch } });
+    if (!user) {
+      throw new NotFoundException('User not found!');
+    }
+
+    return this.mapEntityToDto(user);
+  }
+
+  private mapEntityToDto(user: User): UserDto {
+    return { userId: user.id, username: user.username, password: user.password, email: user.email };
   }
 }
