@@ -1,8 +1,13 @@
+import 'reflect-metadata';
+import * as dotenv from 'dotenv';
+
+// Ensure that the .env file is loaded into process.env before anything else
+dotenv.config();
+
+import { ConsoleLogger, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConsoleLogger, Logger } from '@nestjs/common';
-import { AppConfigService } from './config/app-config.service';
-import 'reflect-metadata';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -11,11 +16,13 @@ async function bootstrap() {
       // logLevels: ['error', 'warn', 'log']
     })
   });
-  const appConfigService: AppConfigService = app.get(AppConfigService);
+
+  const configService: ConfigService = app.get(ConfigService);
+  const port: number = configService.get<number>('PORT', 3000);
 
   const logger: Logger = new Logger('main');
-  logger.log(`Starting the app on port: ${appConfigService.port}`);
+  logger.log(`Starting the app on port: ${port}`);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(port);
 }
 bootstrap();
