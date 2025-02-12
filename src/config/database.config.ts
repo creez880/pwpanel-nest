@@ -1,13 +1,12 @@
-import { ConfigService } from '@nestjs/config';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
+export const DatabaseConfig = {
   type: 'mariadb',
-  host: configService.get<string>('DB_HOST', 'localhost'),
-  port: configService.get<number>('DB_PORT', 3306),
-  username: configService.get<string>('DB_USER', 'root'),
-  password: configService.get<string>('DB_PASSWORD', 'root'),
-  database: configService.get<string>('DB_NAME', 'pwpanel'),
-  synchronize: false,
-  autoLoadEntities: true
-});
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ?? 3306,
+  username: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'root',
+  database: process.env.DB_NAME || 'pwpanel',
+  synchronize: false
+};

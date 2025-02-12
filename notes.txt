@@ -1,0 +1,5 @@
+used start script: 
+"start": "npm run db_migrate && nest start",
+
+alternative start sccript:
+"start": "npm run db_migrate && node build/main.js",

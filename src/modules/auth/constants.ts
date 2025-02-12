@@ -7,11 +7,11 @@ export const jwtConstants = { secret: process.env.JWT_SECRET, expiresIn: process
 if (jwtConstants.secret) {
   logger.log(`The JWT secret has been sucessfully initialized!`);
 } else {
-  logger.error(`An error occurred while initializing the 'JWT_SECRET' environment variable!`);
+  logger.error(`An error occurred while initializing the 'JWT_SECRET' environment variable! Check if the variable 'JWT_SECRET' is set!`);
 }
 
 if (jwtConstants.expiresIn) {
   logger.log(`The JWT expiration variable has been sucessfully initialized!`);
 } else {
-  logger.error(`An error occurred while initializing the 'JWT_EXPIRES_IN' environment variable!`);
+  logger.error(`An error occurred while initializing the 'JWT_EXPIRES_IN' environment variable! Check if the variable 'JWT_EXPIRES_IN' is set!`);
 }
