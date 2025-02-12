@@ -10,16 +10,32 @@ export class UsersService {
 
   constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
-  async findOne(usernameSearch: string): Promise<UserDto> {
-    const user: User | null = await this.userRepository.findOne({ where: { username: usernameSearch } });
-    if (!user) {
-      throw new NotFoundException('User not found!');
-    }
+  async findOneByUsername(username: string): Promise<UserDto | null> {
+    const user: User | null = await this.userRepository.findOne({ where: { username } });
+    return this.userOrNull(user);
+  }
 
-    return this.mapEntityToDto(user);
+  async findOneByEmail(email: string): Promise<UserDto | null> {
+    const user: User | null = await this.userRepository.findOne({ where: { email } });
+    return this.userOrNull(user);
+  }
+
+  async findOneByUsernameAndEmail(username: string, email: string): Promise<UserDto | null> {
+    const user: User | null = await this.userRepository.findOne({ where: [{ username }, { email }] });
+    return this.userOrNull(user);
+  }
+
+  async create(username: string, email: string, password: string): Promise<UserDto | null> {
+    const user: User = this.userRepository.create({ username, email, password });
+    const savedUser: User = await this.userRepository.save(user);
+    return this.userOrNull(savedUser);
   }
 
   private mapEntityToDto(user: User): UserDto {
     return { userId: user.id, username: user.username, password: user.password, email: user.email };
+  }
+
+  private userOrNull(user: User | null): UserDto | null {
+    return user ? this.mapEntityToDto(user) : null;
   }
 }
