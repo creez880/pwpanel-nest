@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { UserLoginRequestDto } from './dtos/user-login-request.dto';
 import { AuthGuard } from './auth.guard';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
-import { UserDto } from '../users/user.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 
 @Controller('auth')
@@ -29,12 +28,7 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async register(@Body() registerDto: UserRegisterRequestDto): Promise<UserRegisterResponseDto> {
     try {
-      const user: UserDto = await this.authService.register(registerDto);
-      return {
-        userId: user.userId,
-        username: user.username,
-        email: user.email
-      };
+      return await this.authService.register(registerDto);
     } catch (error) {
       this.logger.error(`An error occurred while registering user: ${error.message}`);
       throw error;

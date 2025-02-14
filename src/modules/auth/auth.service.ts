@@ -3,7 +3,8 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import * as bcrypt from 'bcrypt';
-import { UserDto } from '../users/user.dto';
+import { UserDto } from '../users/dtos/user.dto';
+import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
   ) {}
 
   async login(username: string, pass: string): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOneByUsername(username);
+    const user: UserDto | null = await this.usersService.findOneByUsername(username);
     if (!user) {
       throw new NotFoundException(`Username '${username}' not found!`);
     }
@@ -29,8 +30,8 @@ export class AuthService {
     return { access_token: await this.jwtService.signAsync(payload) };
   }
 
-  async register(registerUserDto: UserRegisterRequestDto): Promise<UserDto> {
-    const existingUser = await this.usersService.findOneByUsernameAndEmail(registerUserDto.username, registerUserDto.email);
+  async register(registerUserDto: UserRegisterRequestDto): Promise<UserRegisterResponseDto> {
+    const existingUser: UserDto | null = await this.usersService.findOneByUsernameAndEmail(registerUserDto.username, registerUserDto.email);
     if (existingUser) {
       throw new ConflictException('Username or email already exists');
     }
@@ -39,17 +40,25 @@ export class AuthService {
     registerUserDto.password = hashedPassword;
     this.logger.debug(`Password hashed successfully for user '${registerUserDto.username}'`);
 
-    const user = await this.usersService.create(registerUserDto.username, registerUserDto.email, registerUserDto.password);
+    const user: UserDto | null = await this.usersService.create(registerUserDto.username, registerUserDto.email, registerUserDto.password);
     if (!user) {
       this.logger.error(`User could not be created: '${registerUserDto.username}'`);
       throw new BadRequestException('User could not be created');
     }
 
     this.logger.debug(`User created successfully: '${user.username}'`);
-    return user;
+    return this.mapUserDtoToUserRegisterResponseDto(user);
   }
 
   private async getHashedPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 10);
+  }
+
+  private mapUserDtoToUserRegisterResponseDto(user: UserDto): UserRegisterResponseDto {
+    return {
+      userId: user.userId,
+      username: user.username,
+      email: user.email
+    };
   }
 }
