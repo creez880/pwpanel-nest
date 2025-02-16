@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import { ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { UserDto } from '../users/dtos/user.dto';
+import { UsersService } from '../users/users.service';
+import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 
 @Injectable()
@@ -32,11 +33,13 @@ export class AuthService {
     const hashedPassword = await this.getHashedPassword(registerUserDto.password);
     registerUserDto.password = hashedPassword;
 
+    const emailVerificationToken: string = await this.generateRandomToken();
     const user: UserDto = await this.usersService.create(
       registerUserDto.username,
       registerUserDto.email,
       registerUserDto.password,
-      registerUserDto.displayName
+      registerUserDto.displayName,
+      emailVerificationToken
     );
     return this.mapUserDtoToUserRegisterResponseDto(user);
   }
@@ -61,5 +64,9 @@ export class AuthService {
     }
 
     return isPasswordValid;
+  }
+
+  private async generateRandomToken(): Promise<string> {
+    return randomBytes(32).toString('hex');
   }
 }

@@ -40,7 +40,7 @@ export class UsersService {
 
   async create(username: string, email: string, password: string, displayName?: string, emailVerificationToken?: string): Promise<UserDto> {
     try {
-      const user: User = this.userRepository.create({ username, displayName, email, password });
+      const user: User = this.userRepository.create({ username, displayName, email, password, emailVerificationToken });
       const savedUser: User = await this.userRepository.save(user);
       return this.mapEntityToDto(savedUser);
     } catch (error) {
