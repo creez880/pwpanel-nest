@@ -12,6 +12,7 @@ export class UserController {
   constructor(private readonly userService: UsersService) {}
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   async getAllUsers() {
     try {
       return await this.userService.findAllUsers();
@@ -22,6 +23,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.ACCEPTED)
   async deleteUserById(@Param('id', ParseIntPipe) id: number): Promise<DeleteUserResponseDto> {
     try {
       return await this.userService.deleteById(id);

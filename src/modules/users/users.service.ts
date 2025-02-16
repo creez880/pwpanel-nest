@@ -13,34 +13,37 @@ export class UsersService {
 
   async findAllUsers(): Promise<UserDto[]> {
     const users: User[] = await this.userRepository.find();
+    if (!users.length) {
+      return [];
+    }
+
     return users.map((user: User) => this.mapEntityToDto(user));
   }
 
-  async findOneByUsername(username: string): Promise<UserDto | null> {
+  async findOneByUsername(username: string): Promise<UserDto> {
     const user: User | null = await this.userRepository.findOne({ where: { username } });
-    return this.userOrNull(user);
+    if (!user) {
+      throw new NotFoundException(`User not found!`);
+    }
+
+    return this.mapEntityToDto(user);
   }
 
-  async findOneByEmail(email: string): Promise<UserDto | null> {
-    const user: User | null = await this.userRepository.findOne({ where: { email } });
-    return this.userOrNull(user);
-  }
-
-  async findOneByUsernameAndEmail(username: string, email: string): Promise<UserDto | null> {
-    const user: User | null = await this.userRepository.findOne({ where: [{ username }, { email }] });
-    return this.userOrNull(user);
-  }
-
-  async create(username: string, email: string, password: string): Promise<UserDto | null> {
-    const user: User = this.userRepository.create({ username, email, password });
-    const savedUser: User = await this.userRepository.save(user);
-    return this.userOrNull(savedUser);
+  async create(username: string, email: string, password: string, displayName?: string): Promise<UserDto> {
+    try {
+      const user: User = this.userRepository.create({ username, displayName, email, password });
+      const savedUser: User = await this.userRepository.save(user);
+      return this.mapEntityToDto(savedUser);
+    } catch (error) {
+      this.logger.error(`An error occurred while creating user: ${error.message}`);
+      throw error;
+    }
   }
 
   async deleteById(id: number): Promise<DeleteUserResponseDto> {
     const userByIdExists: boolean = await this.userRepository.existsBy({ id });
     if (!userByIdExists) {
-      return { message: `User with ID ${id} does not exist! No user was deleted!`, affected: 0 };
+      return { message: `User not found! No user was deleted!`, affected: 0 };
     }
 
     const deleteResult: DeleteResult = await this.userRepository.delete(id);
@@ -51,11 +54,16 @@ export class UsersService {
     return { message: 'No user was deleted!', affected: 0 };
   }
 
-  private mapEntityToDto(user: User): UserDto {
-    return { userId: user.id, username: user.username, password: user.password, email: user.email };
+  async existsByUsername(username: string): Promise<boolean> {
+    return await this.userRepository.existsBy({ username });
   }
 
-  private userOrNull(user: User | null): UserDto | null {
-    return user ? this.mapEntityToDto(user) : null;
+  private mapEntityToDto(user: User): UserDto {
+    const userDto: UserDto = { userId: user.id, username: user.username, password: user.password, email: user.email };
+    if (user.displayName) {
+      userDto.displayName = user.displayName;
+    }
+
+    return userDto;
   }
 }
