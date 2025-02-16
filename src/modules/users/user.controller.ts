@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Logger, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, ParseIntPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { DeleteUserResponseDto } from './dtos/delete-user-response.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
