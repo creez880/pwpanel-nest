@@ -29,7 +29,16 @@ export class UsersService {
     return this.mapEntityToDto(user);
   }
 
-  async create(username: string, email: string, password: string, displayName?: string): Promise<UserDto> {
+  async findOneById(id: number): Promise<UserDto> {
+    const user: User | null = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`User not found!`);
+    }
+
+    return this.mapEntityToDto(user);
+  }
+
+  async create(username: string, email: string, password: string, displayName?: string, emailVerificationToken?: string): Promise<UserDto> {
     try {
       const user: User = this.userRepository.create({ username, displayName, email, password });
       const savedUser: User = await this.userRepository.save(user);
