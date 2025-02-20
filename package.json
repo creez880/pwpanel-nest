@@ -23,6 +23,7 @@
     "db_migrate_dev": "npx typeorm-ts-node-commonjs migration:run -d ormconfig_dev.ts --transaction each"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
