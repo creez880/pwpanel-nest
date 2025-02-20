@@ -8,21 +8,24 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'username', length: AppConfig.maxUsernameLength, unique: true, nullable: false })
+  @Column({ type: 'varchar', name: 'username', length: AppConfig.maxUsernameLength, unique: true, nullable: false })
   username: string;
 
-  @Column({ name: 'display_name', length: AppConfig.maxDisplayNameLength, nullable: true })
+  @Column({ type: 'varchar', name: 'display_name', length: AppConfig.maxDisplayNameLength, nullable: true })
   displayName: string;
 
-  @Column({ name: 'password', length: 255, nullable: false })
+  @Column({ type: 'varchar', name: 'password', length: 255, nullable: false })
   password: string;
 
-  @Column({ name: 'email', length: 255, unique: true, nullable: false })
+  @Column({ type: 'varchar', name: 'email', length: 255, unique: true, nullable: false })
   email: string;
 
-  @Column({ name: 'email_verified', nullable: false, default: false })
+  @Column({ type: 'boolean', name: 'email_verified', nullable: false, default: false })
   emailVerified: boolean;
 
-  @Column({ name: 'email_verification_token', length: 255, nullable: true })
-  emailVerificationToken: string;
+  @Column({ type: 'varchar', name: 'email_verification_token', length: 255, nullable: true })
+  emailVerificationToken: string | null;
+
+  @Column({ type: 'datetime', name: 'email_verification_expires_at', nullable: true })
+  emailVerificationExpiresAt: Date | null;
 }

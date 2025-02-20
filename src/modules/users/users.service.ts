@@ -1,9 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { UserDto } from './dtos/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import { DeleteUserResponseDto } from './dtos/delete-user-response.dto';
+import { UserDto } from './dtos/user.dto';
+import { UserVerificationStatusDto } from './dtos/verification-status.dto';
+import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -38,9 +39,25 @@ export class UsersService {
     return this.mapEntityToDto(user);
   }
 
-  async create(username: string, email: string, password: string, displayName?: string, emailVerificationToken?: string): Promise<UserDto> {
+  async create(
+    username: string,
+    email: string,
+    password: string,
+    emailVerificationExpiresAt: Date,
+    displayName?: string,
+    emailVerificationToken?: string
+  ): Promise<UserDto> {
     try {
-      const user: User = this.userRepository.create({ username, displayName, email, password, emailVerificationToken });
+      const emailVerified: boolean = false;
+      const user: User = this.userRepository.create({
+        username,
+        displayName,
+        password,
+        email,
+        emailVerified,
+        emailVerificationToken,
+        emailVerificationExpiresAt
+      });
       const savedUser: User = await this.userRepository.save(user);
       return this.mapEntityToDto(savedUser);
     } catch (error) {
@@ -65,6 +82,38 @@ export class UsersService {
 
   async existsByUsername(username: string): Promise<boolean> {
     return await this.userRepository.existsBy({ username });
+  }
+
+  async getVerificationStatus(emailVerificationToken: string): Promise<UserVerificationStatusDto> {
+    const user: User | null = await this.userRepository.findOneBy({ emailVerificationToken });
+    if (!user) {
+      throw new NotFoundException('No user found with this email verification token! Verification token may be expired or does not exist anymore!');
+    }
+
+    return {
+      userId: user.id,
+      isVerified: user.emailVerified,
+      emailVerificationToken: user.emailVerificationToken,
+      emailVerificationExpiresAt: user.emailVerificationExpiresAt
+    };
+  }
+
+  async saveVerificationStatus(userVerificationStatus: UserVerificationStatusDto): Promise<void> {
+    const id: number = userVerificationStatus.userId;
+    const user: User | null = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException('User not found! Can not save verification status!');
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationExpiresAt = null;
+    user.emailVerificationToken = null;
+    await this.userRepository.save(user);
+  }
+
+  async isEmailVerified(id: number): Promise<boolean> {
+    const user: User | null = await this.userRepository.findOneBy({ id });
+    return !!user?.emailVerified;
   }
 
   private mapEntityToDto(user: User): UserDto {
