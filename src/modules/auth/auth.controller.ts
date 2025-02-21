@@ -1,18 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Logger,
-  Post,
-  Query,
-  Request,
-  UseGuards,
-  UsePipes,
-  ValidationPipe
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { UserLoginRequestDto } from './dtos/user-login-request.dto';
@@ -28,10 +14,9 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  login(@Body() loginDto: UserLoginRequestDto): Promise<{ access_token: string }> {
+  async login(@Body() loginDto: UserLoginRequestDto): Promise<{ access_token: string }> {
     try {
-      return this.authService.login(loginDto.username, loginDto.password);
+      return await this.authService.login(loginDto.username, loginDto.password);
     } catch (error) {
       this.logger.error(`An error occurred while logging in: ${error.message}`);
       throw error;
@@ -40,7 +25,6 @@ export class AuthController {
 
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async register(@Body() registerDto: UserRegisterRequestDto): Promise<UserRegisterResponseDto> {
     try {
       return await this.authService.register(registerDto);

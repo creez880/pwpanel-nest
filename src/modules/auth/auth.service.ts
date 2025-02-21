@@ -2,13 +2,13 @@ import { ConflictException, Injectable, Logger, UnauthorizedException } from '@n
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { WelcomeEmailDto } from '../mail/dtos/welcome-email.dto';
+import { MailService } from '../mail/mail.service';
 import { UserDto } from '../users/dtos/user.dto';
+import { UserVerificationStatusDto } from '../users/dtos/verification-status.dto';
 import { UsersService } from '../users/users.service';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
-import { UserVerificationStatusDto } from '../users/dtos/verification-status.dto';
-import { MailService } from '../mail/mail.service';
-import { WelcomeEmailDto } from '../mail/dtos/welcome-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -62,7 +62,6 @@ export class AuthService {
       displayName: user.displayName
     };
 
-    // send email notification
     await this.mailService.welcomeEmail(welcomeEmailDto);
 
     return this.mapUserDtoToUserRegisterResponseDto(user);

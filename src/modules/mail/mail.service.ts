@@ -20,7 +20,10 @@ export class MailService {
         text: emailInfoRequest.data,
         attachments: emailInfoRequest.attachments
       });
-    } catch (error) {}
+    } catch (error) {
+      this.logger.error(`An error occurred while sending the email to '${emailInfoRequest.to}': ${error.message}`);
+      throw error;
+    }
   }
 
   async welcomeEmail(welcomeEmailDto: WelcomeEmailDto): Promise<void> {
