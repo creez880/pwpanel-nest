@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEmail, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 
@@ -23,6 +23,6 @@ export class EmailInfoRequestDto {
 
   @ValidateIf((object) => object.attachments !== undefined)
   @IsArray({ message: 'Attachments must be an array' })
-  @ApiProperty({ required: false, description: 'Email attachments' })
+  @ApiPropertyOptional({ required: false, description: 'Email attachments' })
   attachments?: any[];
 }

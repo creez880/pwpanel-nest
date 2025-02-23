@@ -1,3 +1,9 @@
+# v0.0.3-SNASHOT
+
+## Implemented features
+
+- Added summary and description for every endpoint
+
 # v0.0.2-alpha - 21st February 2025
 
 ## Implemented features:
@@ -9,7 +15,7 @@
 - Added mailing feature
 - Added global validation of the request payloads
 - Improved validation and transformation for all fields inside the request payloads
-- Added swagger module with proper description
+- Added swagger module with proper request body description
   <br><br><br>
 
 # v0.0.1-alpha - 13th February 2025

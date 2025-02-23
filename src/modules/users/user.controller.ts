@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { DeleteUserResponseDto } from './dtos/delete-user-response.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { UserDto } from './dtos/user.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 // @Throttle({ default: { limit: 5, ttl: 15000 } })
 @SkipThrottle()
@@ -12,6 +13,10 @@ export class UserController {
 
   constructor(private readonly userService: UsersService) {}
 
+  @ApiOperation({
+    summary: 'Retrieve all users',
+    description: 'Fetches a list of all registered users. Returns an array of user data.'
+  })
   @Get()
   @HttpCode(HttpStatus.OK)
   async getAllUsers(): Promise<UserDto[]> {
@@ -23,6 +28,10 @@ export class UserController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Retrieve user by ID',
+    description: 'Fetches details of a specific user based on the provided user ID.'
+  })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async getUserById(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
@@ -34,6 +43,10 @@ export class UserController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Delete user by ID',
+    description: 'Deletes a user based on the provided user ID. Returns a confirmation response.'
+  })
   @Delete(':id')
   @HttpCode(HttpStatus.ACCEPTED)
   async deleteUserById(@Param('id', ParseIntPipe) id: number): Promise<DeleteUserResponseDto> {

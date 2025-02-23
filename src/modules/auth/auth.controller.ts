@@ -5,6 +5,7 @@ import { UserLoginRequestDto } from './dtos/user-login-request.dto';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 import { VerifyEmailResponseDto } from './dtos/verify-email-response.dto';
+import { ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -12,6 +13,10 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
+  @ApiOperation({
+    summary: 'User login',
+    description: 'Authenticates a user with their username and password. If valid, returns a JWT access token for authentication.'
+  })
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginDto: UserLoginRequestDto): Promise<{ access_token: string }> {
@@ -23,6 +28,11 @@ export class AuthController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Register a new user',
+    description:
+      'Creates a new user account with the provided username, email, and password. The password is securely hashed before being stored in the database.'
+  })
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
   async register(@Body() registerDto: UserRegisterRequestDto): Promise<UserRegisterResponseDto> {
@@ -34,6 +44,11 @@ export class AuthController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Verify user email',
+    description:
+      "Validates the provided email verification token. If valid, marks the user's email as verified. If the token is invalid or expired, an error response is returned."
+  })
   @HttpCode(HttpStatus.OK)
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string): Promise<VerifyEmailResponseDto> {
@@ -59,6 +74,7 @@ export class AuthController {
    * @param req Request
    * @returns Returns the user itself if the JWT can be verified and is not expired.
    */
+  @ApiExcludeEndpoint()
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() req) {

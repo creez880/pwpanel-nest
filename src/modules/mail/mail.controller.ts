@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Logger, Post } from '@nestjs/co
 import { EmailInfoRequestDto } from './dtos/email-info-request.dto';
 import { WelcomeEmailDto } from './dtos/welcome-email.dto';
 import { MailService } from './mail.service';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('mail')
 export class MailController {
@@ -9,6 +10,10 @@ export class MailController {
 
   constructor(private readonly mailService: MailService) {}
 
+  @ApiOperation({
+    summary: 'Send an email',
+    description: 'Sends an email to the specified recipient with the given subject and message body. Supports optional attachments.'
+  })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async sendMail(@Body() emailInfo: EmailInfoRequestDto) {
@@ -19,7 +24,11 @@ export class MailController {
       throw error;
     }
   }
-
+  @ApiOperation({
+    summary: 'Send a welcome email with verification link',
+    description:
+      "Sends a welcome email to a newly registered user. The email contains a verification link with a token to confirm the user's email address."
+  })
   @Post('welcome')
   @HttpCode(HttpStatus.CREATED)
   async sendWelcomeMail(@Body() welcomeEmailDto: WelcomeEmailDto) {
