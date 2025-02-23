@@ -98,7 +98,7 @@ $ nest build
 # development - also runs the migrations
 $ npm run start
 
-# watch mode - also runs the migrations
+# watch mode - does not run the migrations
 $ npm run start:dev
 
 # production mode - also runs the migrations
