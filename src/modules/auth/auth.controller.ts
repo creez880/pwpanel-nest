@@ -1,11 +1,25 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Post,
+  Query,
+  Request,
+  UseGuards
+} from '@nestjs/common';
+import { ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { ResendVerificationEmailRequestDto } from './dtos/resend-verification-email-request.dto';
 import { UserLoginRequestDto } from './dtos/user-login-request.dto';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 import { VerifyEmailResponseDto } from './dtos/verify-email-response.dto';
-import { ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -56,16 +70,27 @@ export class AuthController {
       throw new BadRequestException('Verification token is required!');
     }
 
-    try {
-      const isVerified: boolean = await this.authService.verifyEmail(token);
-      if (!isVerified) {
-        return { success: false, message: 'Verification token is invalid or may be expired!' };
-      }
+    const isVerified: boolean = await this.authService.verifyEmail(token);
+    if (!isVerified) {
+      return { success: false, message: 'Verification token is invalid or may be expired!' };
+    }
 
-      return { success: true, message: 'Email successfully verified! You can now log in.' };
+    return { success: true, message: 'Email successfully verified! You can now log in.' };
+  }
+
+  @ApiOperation({
+    summary: 'Resend email verification link',
+    description:
+      "Sends a new email verification link to the user's registered email address. This is useful if the previous verification email was lost or expired. The request requires the username of the user."
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('resend-verification-email')
+  async resendVerificationEmail(@Body() requestBody: ResendVerificationEmailRequestDto) {
+    try {
+      await this.authService.resendVerificationMail(requestBody.username);
     } catch (error) {
-      this.logger.error(`An error occurred while verifying email: ${error.message}`);
-      throw error;
+      this.logger.error(``);
+      throw new HttpException(error.message, error.statusCode ?? 500);
     }
   }
 

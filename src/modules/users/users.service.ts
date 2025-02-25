@@ -86,8 +86,9 @@ export class UsersService {
 
   async getVerificationStatus(emailVerificationToken: string): Promise<UserVerificationStatusDto> {
     const user: User | null = await this.userRepository.findOneBy({ emailVerificationToken });
+
     if (!user) {
-      throw new NotFoundException('No user found with this email verification token! Verification token may be expired or does not exist anymore!');
+      throw new NotFoundException('Invalid or expired verification token.');
     }
 
     return {
@@ -98,17 +99,18 @@ export class UsersService {
     };
   }
 
-  async saveVerificationStatus(userVerificationStatus: UserVerificationStatusDto): Promise<void> {
-    const id: number = userVerificationStatus.userId;
-    const user: User | null = await this.userRepository.findOneBy({ id });
-    if (!user) {
-      throw new NotFoundException('User not found! Can not save verification status!');
+  async updateUserVerificationStatus(userVerificationStatus: UserVerificationStatusDto) {
+    const updateData: Partial<User> = { emailVerified: userVerificationStatus.isVerified };
+
+    if (userVerificationStatus.isVerified) {
+      updateData.emailVerificationToken = null;
+      updateData.emailVerificationExpiresAt = null;
+    } else {
+      updateData.emailVerificationToken = userVerificationStatus.emailVerificationToken;
+      updateData.emailVerificationExpiresAt = userVerificationStatus.emailVerificationExpiresAt;
     }
 
-    user.emailVerified = true;
-    user.emailVerificationExpiresAt = null;
-    user.emailVerificationToken = null;
-    await this.userRepository.save(user);
+    await this.userRepository.update(userVerificationStatus.userId, updateData);
   }
 
   async isEmailVerified(id: number): Promise<boolean> {

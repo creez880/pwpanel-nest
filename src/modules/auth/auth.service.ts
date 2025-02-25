@@ -14,6 +14,8 @@ import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 export class AuthService {
   private readonly logger: Logger = new Logger(AuthService.name);
 
+  private readonly VERIFICATION_WINDOW_IN_MINUTES: number = 15;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -42,15 +44,13 @@ export class AuthService {
     const hashedPassword = await this.getHashedPassword(registerUserDto.password);
     registerUserDto.password = hashedPassword;
 
-    const emailVerificationToken: string = await this.generateRandomToken();
-    const emailVerificationExipresAt: Date = new Date();
-    emailVerificationExipresAt.setMinutes(emailVerificationExipresAt.getMinutes() + 15);
+    const { emailVerificationToken, emailVerificationExpiresAt } = await this.getNewVerificationTokenAndExpiresAtDate();
 
     const user: UserDto = await this.usersService.create(
       registerUserDto.username,
       registerUserDto.email,
       registerUserDto.password,
-      emailVerificationExipresAt,
+      emailVerificationExpiresAt,
       registerUserDto.displayName,
       emailVerificationToken
     );
@@ -68,23 +68,59 @@ export class AuthService {
   }
 
   async verifyEmail(verificationToken: string): Promise<boolean> {
-    try {
-      const userVerificationStatus: UserVerificationStatusDto = await this.usersService.getVerificationStatus(verificationToken);
-      if (!userVerificationStatus.emailVerificationExpiresAt) {
-        return false;
-      }
+    const userVerificationStatus: UserVerificationStatusDto | null = await this.usersService
+      .getVerificationStatus(verificationToken)
+      .catch((error) => {
+        this.logger.warn(`Email verification failed: ${error.message}`);
+        return null;
+      });
 
-      const now: Date = new Date();
-      if (now > userVerificationStatus.emailVerificationExpiresAt) {
-        return false;
-      }
-
-      await this.usersService.saveVerificationStatus(userVerificationStatus);
-      return true;
-    } catch (error) {
-      this.logger.error(`An error occurred while verifying an user email: ${error.message}`);
-      throw error;
+    if (!userVerificationStatus) {
+      return false;
     }
+
+    const now: Date = new Date();
+    if (userVerificationStatus.emailVerificationExpiresAt && now > userVerificationStatus.emailVerificationExpiresAt) {
+      return false;
+    }
+
+    userVerificationStatus.isVerified = true;
+    await this.usersService.updateUserVerificationStatus(userVerificationStatus);
+    return true;
+  }
+
+  async resendVerificationMail(username: string) {
+    const user: UserDto = await this.usersService.findOneByUsername(username);
+    const isEmailVerified: boolean = await this.usersService.isEmailVerified(user.userId);
+    if (isEmailVerified) {
+      this.logger.debug(`User is already verified. The verification email will not be sent.`);
+      return;
+    }
+
+    const { emailVerificationToken, emailVerificationExpiresAt } = await this.getNewVerificationTokenAndExpiresAtDate();
+    const verificationStatus: UserVerificationStatusDto = {
+      userId: user.userId,
+      isVerified: false,
+      emailVerificationToken,
+      emailVerificationExpiresAt
+    };
+
+    await this.usersService.updateUserVerificationStatus(verificationStatus);
+    const welcomeEmailDto: WelcomeEmailDto = {
+      to: user.email,
+      verificationToken: emailVerificationToken,
+      username: user.username,
+      displayName: user.displayName
+    };
+
+    await this.mailService.welcomeEmail(welcomeEmailDto);
+  }
+
+  private async getNewVerificationTokenAndExpiresAtDate(): Promise<{ emailVerificationExpiresAt: Date; emailVerificationToken: string }> {
+    const emailVerificationToken: string = await this.generateRandomToken();
+    const emailVerificationExpiresAt: Date = new Date();
+    emailVerificationExpiresAt.setMinutes(emailVerificationExpiresAt.getMinutes() + this.VERIFICATION_WINDOW_IN_MINUTES);
+    return { emailVerificationToken, emailVerificationExpiresAt };
   }
 
   private async getHashedPassword(password: string): Promise<string> {
