@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes';
 
 const logger: Logger = new Logger('main');
 
@@ -28,9 +29,13 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
 
+  const theme = new SwaggerTheme();
+
   const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, documentFactory, {
-    jsonDocumentUrl: 'swagger/json'
+    jsonDocumentUrl: 'swagger/json',
+    customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
+    explorer: true
   });
 
   const port: number = configService.get<number>('PORT', 3000);
