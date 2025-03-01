@@ -8,6 +8,9 @@ export class CronService {
 
   constructor(private readonly userService: UsersService) {}
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
-  clearAllOverdueUserVerificationToken() {}
+  @Cron(CronExpression.EVERY_HOUR)
+  clearAllOverdueUserVerificationToken(): void {
+    this.logger.debug('Clearing all overdue user verification token');
+    this.userService.clearAllOverdueUserVerificationToken();
+  }
 }

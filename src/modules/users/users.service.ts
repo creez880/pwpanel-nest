@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, LessThan, Repository } from 'typeorm';
 import { DeleteUserResponseDto } from './dtos/delete-user-response.dto';
 import { UserDto } from './dtos/user.dto';
 import { UserVerificationStatusDto } from './dtos/verification-status.dto';
@@ -18,7 +18,7 @@ export class UsersService {
       return [];
     }
 
-    return users.map((user: User) => this.mapEntityToDto(user));
+    return this.mapAllEntityToDto(users);
   }
 
   async findOneByUsername(username: string): Promise<UserDto> {
@@ -127,6 +127,24 @@ export class UsersService {
     return !!user?.emailVerified;
   }
 
+  async clearAllOverdueUserVerificationToken() {
+    let users: User[] = await this.getAllUserWithOverdueVerificationToken1();
+    users = users.map((user: User) => {
+      user.emailVerificationExpiresAt = null;
+      user.emailVerificationToken = null;
+      return user;
+    });
+
+    const savedUsers: User[] = await this.userRepository.save(users);
+    return this.mapAllEntityToDto(savedUsers);
+  }
+
+  private async getAllUserWithOverdueVerificationToken1(): Promise<User[]> {
+    const now: Date = new Date();
+    const users: User[] = await this.userRepository.find({ where: { emailVerificationExpiresAt: LessThan(now) } });
+    return users;
+  }
+
   private mapEntityToDto(user: User): UserDto {
     const userDto: UserDto = { userId: user.id, username: user.username, password: user.password, email: user.email };
     if (user.displayName) {
@@ -134,5 +152,9 @@ export class UsersService {
     }
 
     return userDto;
+  }
+
+  private mapAllEntityToDto(users: User[]): UserDto[] {
+    return users.map((user: User) => this.mapEntityToDto(user));
   }
 }
