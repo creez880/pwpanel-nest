@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './modules/mail/mail.module';
+import { CronModule } from './modules/cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -18,7 +19,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     DatabaseModule,
     UsersModule,
     AuthModule,
-    MailModule
+    MailModule,
+    CronModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
