@@ -20,6 +20,7 @@ import { UserLoginRequestDto } from './dtos/user-login-request.dto';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 import { VerifyEmailResponseDto } from './dtos/verify-email-response.dto';
+import { verifyEmailRequestDto } from './dtos/verify-email-request.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -64,13 +65,9 @@ export class AuthController {
       "Validates the provided email verification token. If valid, marks the user's email as verified. If the token is invalid or expired, an error response is returned."
   })
   @HttpCode(HttpStatus.OK)
-  @Get('verify-email')
-  async verifyEmail(@Query('token') token: string): Promise<VerifyEmailResponseDto> {
-    if (!token) {
-      throw new BadRequestException('Verification token is required!');
-    }
-
-    const isVerified: boolean = await this.authService.verifyEmail(token);
+  @Post('verify-email')
+  async verifyEmail(@Body() verifyEmailRequest: verifyEmailRequestDto): Promise<VerifyEmailResponseDto> {
+    const isVerified: boolean = await this.authService.verifyEmail(verifyEmailRequest.verificationToken);
     if (!isVerified) {
       return { success: false, message: 'Verification token is invalid or may be expired!' };
     }
@@ -83,14 +80,13 @@ export class AuthController {
     description:
       "Sends a new email verification link to the user's registered email address. This is useful if the previous verification email was lost or expired. The request requires the username of the user."
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @Post('resend-verification-email')
-  async resendVerificationEmail(@Body() requestBody: ResendVerificationEmailRequestDto) {
+  async resendVerificationEmail(@Body() requestBody: ResendVerificationEmailRequestDto): Promise<{ message: string } | undefined> {
     try {
-      await this.authService.resendVerificationMail(requestBody.username);
+      return await this.authService.resendVerificationMail(requestBody.username);
     } catch (error) {
-      this.logger.error(``);
-      throw new HttpException(error.message, error.statusCode ?? 500);
+      throw new HttpException(error.message, error.statusCode ?? error.status ?? 500);
     }
   }
 

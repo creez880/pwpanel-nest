@@ -89,31 +89,35 @@ export class AuthService {
     return true;
   }
 
-  async resendVerificationMail(username: string) {
-    const user: UserDto = await this.usersService.findOneByUsername(username);
-    const isEmailVerified: boolean = await this.usersService.isEmailVerified(user.userId);
-    if (isEmailVerified) {
-      this.logger.debug(`User is already verified. The verification email will not be sent.`);
-      return;
+  async resendVerificationMail(username: string): Promise<{ message: string }> {
+    try {
+      const user = await this.usersService.findOneByUsernameSilently(username);
+      if (user) {
+        const isEmailVerified = await this.usersService.isEmailVerified(user.userId);
+        if (!isEmailVerified) {
+          const { emailVerificationToken, emailVerificationExpiresAt } = await this.getNewVerificationTokenAndExpiresAtDate();
+          await this.usersService.updateUserVerificationStatus({
+            userId: user.userId,
+            isVerified: false,
+            emailVerificationToken,
+            emailVerificationExpiresAt
+          });
+          await this.mailService.welcomeEmail({
+            to: user.email,
+            verificationToken: emailVerificationToken,
+            username: user.username,
+            displayName: user.displayName
+          });
+        } else {
+          this.logger.debug('User is already verified. The verification email will not be sent.');
+        }
+      } else {
+        this.logger.debug(`User '${username}' does not exist - no verification email will be sent.`);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to resend the verification email due to: ${error.message}`);
     }
-
-    const { emailVerificationToken, emailVerificationExpiresAt } = await this.getNewVerificationTokenAndExpiresAtDate();
-    const verificationStatus: UserVerificationStatusDto = {
-      userId: user.userId,
-      isVerified: false,
-      emailVerificationToken,
-      emailVerificationExpiresAt
-    };
-
-    await this.usersService.updateUserVerificationStatus(verificationStatus);
-    const welcomeEmailDto: WelcomeEmailDto = {
-      to: user.email,
-      verificationToken: emailVerificationToken,
-      username: user.username,
-      displayName: user.displayName
-    };
-
-    await this.mailService.welcomeEmail(welcomeEmailDto);
+    return { message: 'Verification mail will be sent out if user exists' };
   }
 
   private async getNewVerificationTokenAndExpiresAtDate(): Promise<{ emailVerificationExpiresAt: Date; emailVerificationToken: string }> {

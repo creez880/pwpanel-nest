@@ -30,6 +30,15 @@ export class UsersService {
     return this.mapEntityToDto(user);
   }
 
+  async findOneByUsernameSilently(username: string): Promise<UserDto | undefined> {
+    const user: User | null = await this.userRepository.findOne({ where: { username } });
+    if (!user) {
+      return;
+    }
+
+    return this.mapEntityToDto(user);
+  }
+
   async findOneById(id: number): Promise<UserDto> {
     const user: User | null = await this.userRepository.findOneBy({ id });
     if (!user) {
