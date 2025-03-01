@@ -6,6 +6,7 @@
 - Added functionality to resend the activation link
 - Added dark mode to swagger
 - Modify the endpoint /auth/verify-email from GET to POST; use request body instead of query param for the verification token
+- Added scheduler to clear all overdue user verification token
 
 # v0.0.2-alpha - 21st February 2025
 

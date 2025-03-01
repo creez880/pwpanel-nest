@@ -6,17 +6,21 @@ import { DatabaseModule } from './database/database.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './modules/mail/mail.module';
+import { CronModule } from './modules/cron/cron.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 15000, limit: 10 }]),
     DatabaseModule,
     UsersModule,
     AuthModule,
-    MailModule
+    MailModule,
+    CronModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
