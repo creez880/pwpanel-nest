@@ -12,7 +12,7 @@ import {
   Request,
   UseGuards
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { ResendVerificationEmailRequestDto } from './dtos/resend-verification-email-request.dto';
@@ -20,7 +20,6 @@ import { UserLoginRequestDto } from './dtos/user-login-request.dto';
 import { UserRegisterRequestDto } from './dtos/user-register-request.dto';
 import { UserRegisterResponseDto } from './dtos/user-register-response.dto';
 import { VerifyEmailResponseDto } from './dtos/verify-email-response.dto';
-import { verifyEmailRequestDto } from './dtos/verify-email-request.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -64,10 +63,13 @@ export class AuthController {
     description:
       "Validates the provided email verification token. If valid, marks the user's email as verified. If the token is invalid or expired, an error response is returned."
   })
+  @ApiQuery({ name: 'token', description: 'The verification token', required: true })
   @HttpCode(HttpStatus.OK)
-  @Post('verify-email')
-  async verifyEmail(@Body() verifyEmailRequest: verifyEmailRequestDto): Promise<VerifyEmailResponseDto> {
-    const isVerified: boolean = await this.authService.verifyEmail(verifyEmailRequest.verificationToken);
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string): Promise<VerifyEmailResponseDto> {
+    this.validateVerificationToken(token);
+
+    const isVerified: boolean = await this.authService.verifyEmail(token);
     if (!isVerified) {
       return { success: false, message: 'Verification token is invalid or may be expired!' };
     }
@@ -100,5 +102,23 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  private validateVerificationToken(token: string): void {
+    if (!token) {
+      throw new BadRequestException('The verification token is required!');
+    }
+
+    if (token.trim() === '') {
+      throw new BadRequestException('The verification token can not be empty!');
+    }
+
+    if (!token.match(/^\S+$/)) {
+      throw new BadRequestException('The verification token cannot contain spaces');
+    }
+
+    if (token.length !== 64) {
+      throw new BadRequestException('The verification token must have exactly 64 characters!');
+    }
   }
 }
